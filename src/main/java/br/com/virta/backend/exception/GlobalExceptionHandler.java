@@ -31,4 +31,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("erro", ex.getMessage()));
     }
+
+    @ExceptionHandler(InvalidGoogleTokenException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidGoogleToken(InvalidGoogleTokenException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("erro", ex.getMessage()));
+    }
 }

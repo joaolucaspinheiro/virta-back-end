@@ -28,6 +28,9 @@ public class Usuario {
     @Column(name = "senha_criptografada", nullable = false)
     private String senhaCriptografada;
 
+    @Column(name = "foto")
+    private String foto;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 

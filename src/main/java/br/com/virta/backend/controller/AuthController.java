@@ -1,5 +1,6 @@
 package br.com.virta.backend.controller;
 
+import br.com.virta.backend.dto.GoogleLoginRequestDTO;
 import br.com.virta.backend.dto.LoginRequestDTO;
 import br.com.virta.backend.dto.LoginResponseDTO;
 import br.com.virta.backend.dto.RegisterRequestDTO;
@@ -35,6 +36,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO dto) {
         Usuario usuario = authService.login(dto);
+        String token = jwtService.generateToken(usuario);
+        return ResponseEntity.ok(new LoginResponseDTO(token, usuario.getId(), usuario.getNome(), usuario.getEmail()));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponseDTO> google(@RequestBody @Valid GoogleLoginRequestDTO dto) {
+        Usuario usuario = authService.loginWithGoogle(dto.credential());
         String token = jwtService.generateToken(usuario);
         return ResponseEntity.ok(new LoginResponseDTO(token, usuario.getId(), usuario.getNome(), usuario.getEmail()));
     }
