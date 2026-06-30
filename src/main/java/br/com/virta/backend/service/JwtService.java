@@ -1,6 +1,6 @@
 package br.com.virta.backend.service;
 
-import br.com.virta.backend.model.Usuario;
+import br.com.virta.backend.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -16,14 +16,14 @@ public class JwtService {
     @Value("${api.security.token.secret}")
     private String secret;
 
-    private static final long EXPIRATION_MS = 24L * 60 * 60 * 1000; // 24 horas
+    private static final long EXPIRATION_MS = 24L * 60 * 60 * 1000; // 24 hours
 
-    public String generateToken(Usuario usuario) {
+    public String generateToken(User user) {
         Date now = new Date();
         return Jwts.builder()
-                .subject(usuario.getEmail())
-                .claim("id", usuario.getId())
-                .claim("nome", usuario.getNome())
+                .subject(user.getEmail())
+                .claim("id", user.getId())
+                .claim("name", user.getName())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + EXPIRATION_MS))
                 .signWith(getSigningKey())
@@ -34,12 +34,13 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
     public String validateToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .getSubject(); // retorna o email, ou lança exceção se inválido
+                .getSubject(); // returns the email, or throws if invalid
     }
 }

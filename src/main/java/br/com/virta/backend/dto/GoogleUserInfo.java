@@ -1,8 +1,8 @@
 package br.com.virta.backend.dto;
 
-/** Dados extraídos do ID token do Google já validado. */
+/** Data extracted from a validated Google ID token. */
 public record GoogleUserInfo(
         String email,
-        String nome,
-        String foto
+        String name,
+        String photo
 ) {}

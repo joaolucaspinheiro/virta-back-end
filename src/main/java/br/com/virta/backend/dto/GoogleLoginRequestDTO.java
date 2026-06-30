@@ -2,7 +2,7 @@ package br.com.virta.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-/** Corpo da requisição de login com Google: o ID token (credential) do GIS. */
+/** Body of the Google login request: the GIS ID token (credential). */
 public record GoogleLoginRequestDTO(
         @NotBlank String credential
 ) {}

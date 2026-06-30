@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequestDTO(
-        @NotBlank String nome,
+        @NotBlank String name,
         @NotBlank @Email String email,
-        @NotBlank @Size(min = 6) String senha
+        @NotBlank @Size(min = 6) String password
 ) {}

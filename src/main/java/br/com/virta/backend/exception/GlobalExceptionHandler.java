@@ -23,18 +23,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, String>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("erro", ex.getMessage()));
+                .body(Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("erro", ex.getMessage()));
+                .body(Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidGoogleTokenException.class)
     public ResponseEntity<Map<String, String>> handleInvalidGoogleToken(InvalidGoogleTokenException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("erro", ex.getMessage()));
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidResetToken(InvalidResetTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, String>> handleBusiness(BusinessException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of("error", ex.getMessage()));
     }
 }

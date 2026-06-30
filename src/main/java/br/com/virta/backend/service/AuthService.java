@@ -5,8 +5,8 @@ import br.com.virta.backend.dto.LoginRequestDTO;
 import br.com.virta.backend.dto.RegisterRequestDTO;
 import br.com.virta.backend.exception.EmailAlreadyExistsException;
 import br.com.virta.backend.exception.InvalidCredentialsException;
-import br.com.virta.backend.model.Usuario;
-import br.com.virta.backend.repository.UsuarioRepository;
+import br.com.virta.backend.model.User;
+import br.com.virta.backend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,48 +15,47 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UserRepository userRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthService(UsuarioRepository usuarioRepository,
+    public AuthService(UserRepository userRepository,
                        GoogleTokenVerifier googleTokenVerifier) {
-        this.usuarioRepository = usuarioRepository;
+        this.userRepository = userRepository;
         this.googleTokenVerifier = googleTokenVerifier;
-        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     public void register(RegisterRequestDTO dto) {
-        if (usuarioRepository.existsByEmail(dto.email())) {
+        if (userRepository.existsByEmail(dto.email())) {
             throw new EmailAlreadyExistsException(dto.email());
         }
-        Usuario usuario = new Usuario(dto.nome(), dto.email(), passwordEncoder.encode(dto.senha()));
-        usuarioRepository.save(usuario);
+        User user = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()));
+        userRepository.save(user);
     }
 
-    public Usuario login(LoginRequestDTO dto) {
-        Usuario usuario = usuarioRepository.findByEmail(dto.email())
+    public User login(LoginRequestDTO dto) {
+        User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(InvalidCredentialsException::new);
-        if (!passwordEncoder.matches(dto.senha(), usuario.getSenhaCriptografada())) {
+        if (!passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
-        return usuario;
+        return user;
     }
 
     /**
-     * Login/cadastro via Google. Valida o ID token e, se for o primeiro acesso,
-     * cria o usuário com uma senha aleatória (a conta é controlada pelo Google).
+     * Login/sign-up via Google. Validates the ID token and, on first access,
+     * creates the user with a random password (the account is owned by Google).
      */
-    public Usuario loginWithGoogle(String credential) {
+    public User loginWithGoogle(String credential) {
         GoogleUserInfo info = googleTokenVerifier.verify(credential);
-        return usuarioRepository.findByEmail(info.email())
+        return userRepository.findByEmail(info.email())
                 .orElseGet(() -> {
-                    Usuario novo = new Usuario(
-                            info.nome(),
+                    User created = new User(
+                            info.name(),
                             info.email(),
                             passwordEncoder.encode(UUID.randomUUID().toString()));
-                    novo.setFoto(info.foto());
-                    return usuarioRepository.save(novo);
+                    created.setPhoto(info.photo());
+                    return userRepository.save(created);
                 });
     }
 }

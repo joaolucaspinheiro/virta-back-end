@@ -9,9 +9,9 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Valida o ID token do Google consultando o endpoint público tokeninfo.
- * O Google verifica assinatura e expiração; aqui conferimos o destinatário
- * (aud == nosso Client ID) e se o e-mail foi verificado.
+ * Validates the Google ID token by calling the public tokeninfo endpoint.
+ * Google checks signature and expiration; here we verify the audience
+ * (aud == our Client ID) and that the e-mail is verified.
  */
 @Service
 public class GoogleTokenVerifier {
@@ -34,7 +34,7 @@ public class GoogleTokenVerifier {
                     .retrieve()
                     .body(TokenInfo.class);
         } catch (RestClientException e) {
-            // Token inválido/expirado faz o Google responder com erro HTTP.
+            // An invalid/expired token makes Google respond with an HTTP error.
             throw new InvalidGoogleTokenException();
         }
 
@@ -48,11 +48,11 @@ public class GoogleTokenVerifier {
             throw new InvalidGoogleTokenException();
         }
 
-        String nome = info.name() != null ? info.name() : info.email();
-        return new GoogleUserInfo(info.email(), nome, info.picture());
+        String name = info.name() != null ? info.name() : info.email();
+        return new GoogleUserInfo(info.email(), name, info.picture());
     }
 
-    /** Subconjunto da resposta do tokeninfo que nos interessa. */
+    /** Subset of the tokeninfo response that we care about. */
     private record TokenInfo(
             String aud,
             String email,
