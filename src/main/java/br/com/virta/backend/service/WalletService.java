@@ -1,6 +1,7 @@
 package br.com.virta.backend.service;
 
 import br.com.virta.backend.dto.AddMemberRequestDTO;
+import br.com.virta.backend.dto.AddMemberResponseDTO;
 import br.com.virta.backend.dto.UpdateMemberRoleRequestDTO;
 import br.com.virta.backend.dto.WalletMemberResponseDTO;
 import br.com.virta.backend.dto.WalletRequestDTO;
@@ -16,10 +17,12 @@ import br.com.virta.backend.repository.UserRepository;
 import br.com.virta.backend.repository.WalletMemberRepository;
 import br.com.virta.backend.repository.WalletRepository;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WalletService {
@@ -27,13 +30,17 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final WalletMemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final PasswordResetService passwordResetService;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public WalletService(WalletRepository walletRepository,
                          WalletMemberRepository memberRepository,
-                         UserRepository userRepository) {
+                         UserRepository userRepository,
+                         PasswordResetService passwordResetService) {
         this.walletRepository = walletRepository;
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
+        this.passwordResetService = passwordResetService;
     }
 
     @Transactional(readOnly = true)
@@ -92,20 +99,39 @@ public class WalletService {
     }
 
     @Transactional
-    public WalletMemberResponseDTO addMember(String email, Long walletId, AddMemberRequestDTO dto) {
+    public AddMemberResponseDTO addMember(String email, Long walletId, AddMemberRequestDTO dto) {
         User user = currentUser(email);
         Wallet wallet = walletOrThrow(walletId);
         requireOwner(membershipOrThrow(wallet, user));
         if (dto.role() == WalletRole.OWNER) {
             throw new BusinessException("A wallet can only have one owner.");
         }
-        User target = userRepository.findByEmail(dto.email())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + dto.email()));
-        if (memberRepository.existsByWalletAndUser(wallet, target)) {
+
+        User target = userRepository.findByEmail(dto.email()).orElse(null);
+        boolean created = false;
+        String debugToken = null;
+
+        if (target == null) {
+            // Invite flow: create a placeholder account and issue a reset token so
+            // the invited person can set their password (simulated e-mail).
+            target = userRepository.save(new User(
+                    nameFromEmail(dto.email()),
+                    dto.email(),
+                    passwordEncoder.encode(UUID.randomUUID().toString())));
+            debugToken = passwordResetService.requestReset(dto.email());
+            created = true;
+        } else if (memberRepository.existsByWalletAndUser(wallet, target)) {
             throw new ConflictException("User is already a member of this wallet.");
         }
+
         WalletMember member = memberRepository.save(new WalletMember(wallet, target, dto.role()));
-        return toMemberDto(member);
+        return new AddMemberResponseDTO(toMemberDto(member), created, debugToken);
+    }
+
+    private String nameFromEmail(String email) {
+        int at = email.indexOf('@');
+        String local = at > 0 ? email.substring(0, at) : email;
+        return local.isBlank() ? email : local;
     }
 
     @Transactional

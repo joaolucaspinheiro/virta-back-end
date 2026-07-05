@@ -1,6 +1,7 @@
 package br.com.virta.backend.controller;
 
 import br.com.virta.backend.dto.AddMemberRequestDTO;
+import br.com.virta.backend.dto.AddMemberResponseDTO;
 import br.com.virta.backend.dto.UpdateMemberRoleRequestDTO;
 import br.com.virta.backend.dto.WalletMemberResponseDTO;
 import br.com.virta.backend.dto.WalletRequestDTO;
@@ -61,11 +62,11 @@ public class WalletController {
     }
 
     @PostMapping("/{id}/members")
-    public ResponseEntity<WalletMemberResponseDTO> addMember(@PathVariable Long id,
-                                                             @RequestBody @Valid AddMemberRequestDTO dto,
-                                                             Authentication auth) {
-        WalletMemberResponseDTO member = walletService.addMember(auth.getName(), id, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(member);
+    public ResponseEntity<AddMemberResponseDTO> addMember(@PathVariable Long id,
+                                                          @RequestBody @Valid AddMemberRequestDTO dto,
+                                                          Authentication auth) {
+        AddMemberResponseDTO result = walletService.addMember(auth.getName(), id, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PatchMapping("/{id}/members/{userId}")
