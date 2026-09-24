@@ -6,9 +6,11 @@ import br.com.virta.backend.model.TransactionType;
 import br.com.virta.backend.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -27,6 +29,10 @@ public class TransactionController {
                                                              @RequestParam(required = false) TransactionType type,
                                                              Authentication auth) {
         return ResponseEntity.ok(transactionService.list(auth.getName(), walletId, type));
+    }
+    @GetMapping(value="/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter events(@PathVariable Long walletId, Authentication auth){
+        return transactionService.subscribe(auth.getName(), walletId);
     }
 
     @GetMapping("/{id}")

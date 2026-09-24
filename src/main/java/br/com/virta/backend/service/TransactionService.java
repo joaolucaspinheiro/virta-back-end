@@ -21,6 +21,7 @@ import br.com.virta.backend.repository.WalletRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,17 +39,20 @@ public class TransactionService {
     private final WalletMemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final WalletEventService walletEventService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               WalletRepository walletRepository,
                               WalletMemberRepository memberRepository,
                               CategoryRepository categoryRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              WalletEventService walletEventService) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
         this.memberRepository = memberRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.walletEventService = walletEventService;
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +82,7 @@ public class TransactionService {
         Category category = resolveCategory(dto.categoryId(), user);
         Transaction transaction = transactionRepository.save(new Transaction(
                 wallet, category, user, dto.type(), dto.amount(), dto.description(), dto.date()));
+        walletEventService.publish(walletId, "transaction-changed");
         return toDto(transaction);
     }
 
@@ -93,6 +98,7 @@ public class TransactionService {
         transaction.setDate(dto.date());
         transaction.setCategory(resolveCategory(dto.categoryId(), user));
         transactionRepository.save(transaction);
+        walletEventService.publish(walletId, "transaction-changed");
         return toDto(transaction);
     }
 
@@ -102,8 +108,15 @@ public class TransactionService {
         Wallet wallet = walletOrThrow(walletId);
         requireWriter(membershipOrThrow(wallet, user));
         transactionRepository.delete(transactionOrThrow(id, wallet));
+        walletEventService.publish(walletId, "transaction-changed");
     }
-
+@Transactional(readOnly = true)
+public SseEmitter subscribe(String email, Long walletId){
+        User user = currentUser(email);
+        Wallet wallet = walletOrThrow(walletId);
+        membershipOrThrow(wallet,user);
+        return walletEventService.subscribe(walletId);
+}
     @Transactional(readOnly = true)
     public DashboardSummaryResponseDTO summary(String email, Long walletId,
                                                LocalDate startDate, LocalDate endDate) {
