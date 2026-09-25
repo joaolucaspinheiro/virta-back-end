@@ -1,6 +1,11 @@
 package br.com.virta.backend.service;
 
+import br.com.virta.backend.event.TransactionChangedEvent;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -47,5 +52,10 @@ public class WalletEventService {
                 emitters.remove(emitter);
             }
         }
+    }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+        public void onTransactionChanged(TransactionChangedEvent event){
+            publish(event.walletId(), "transaction-changed");
+
     }
 }

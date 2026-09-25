@@ -5,6 +5,7 @@ import br.com.virta.backend.dto.DashboardSummaryResponseDTO.CategorySummary;
 import br.com.virta.backend.dto.DashboardSummaryResponseDTO.MonthSummary;
 import br.com.virta.backend.dto.TransactionRequestDTO;
 import br.com.virta.backend.dto.TransactionResponseDTO;
+import br.com.virta.backend.event.TransactionChangedEvent;
 import br.com.virta.backend.exception.ResourceNotFoundException;
 import br.com.virta.backend.model.Category;
 import br.com.virta.backend.model.Transaction;
@@ -18,6 +19,8 @@ import br.com.virta.backend.repository.TransactionRepository;
 import br.com.virta.backend.repository.UserRepository;
 import br.com.virta.backend.repository.WalletMemberRepository;
 import br.com.virta.backend.repository.WalletRepository;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,19 +43,22 @@ public class TransactionService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final WalletEventService walletEventService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TransactionService(TransactionRepository transactionRepository,
                               WalletRepository walletRepository,
                               WalletMemberRepository memberRepository,
                               CategoryRepository categoryRepository,
                               UserRepository userRepository,
-                              WalletEventService walletEventService) {
+                              WalletEventService walletEventService,
+                              ApplicationEventPublisher eventPublisher) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
         this.memberRepository = memberRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.walletEventService = walletEventService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -82,7 +88,7 @@ public class TransactionService {
         Category category = resolveCategory(dto.categoryId(), user);
         Transaction transaction = transactionRepository.save(new Transaction(
                 wallet, category, user, dto.type(), dto.amount(), dto.description(), dto.date()));
-        walletEventService.publish(walletId, "transaction-changed");
+        eventPublisher.publishEvent(new TransactionChangedEvent(walletId));
         return toDto(transaction);
     }
 
@@ -98,7 +104,7 @@ public class TransactionService {
         transaction.setDate(dto.date());
         transaction.setCategory(resolveCategory(dto.categoryId(), user));
         transactionRepository.save(transaction);
-        walletEventService.publish(walletId, "transaction-changed");
+        eventPublisher.publishEvent(new TransactionChangedEvent(walletId));
         return toDto(transaction);
     }
 
@@ -108,7 +114,7 @@ public class TransactionService {
         Wallet wallet = walletOrThrow(walletId);
         requireWriter(membershipOrThrow(wallet, user));
         transactionRepository.delete(transactionOrThrow(id, wallet));
-        walletEventService.publish(walletId, "transaction-changed");
+        eventPublisher.publishEvent(new TransactionChangedEvent(walletId));
     }
 @Transactional(readOnly = true)
 public SseEmitter subscribe(String email, Long walletId){
