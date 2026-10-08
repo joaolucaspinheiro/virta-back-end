@@ -13,6 +13,8 @@ import java.util.UUID;
 
 @Service
 public class PasswordResetService {
+    private final EmailService emailService;
+
 
     private static final long EXPIRATION_HOURS = 1;
 
@@ -20,8 +22,9 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public PasswordResetService(UserRepository userRepository,
+    public PasswordResetService(EmailService emailService, UserRepository userRepository,
                                 PasswordResetTokenRepository tokenRepository) {
+        this.emailService = emailService;
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
     }
@@ -31,15 +34,13 @@ public class PasswordResetService {
      * Returns the token (for testing/debug only) or null — the client response
      * is neutral regardless, so it never reveals whether the e-mail is registered.
      */
-    public String requestReset(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> {
-                    String token = UUID.randomUUID().toString();
-                    LocalDateTime expiresAt = LocalDateTime.now().plusHours(EXPIRATION_HOURS);
-                    tokenRepository.save(new PasswordResetToken(user, token, expiresAt));
-                    return token;
-                })
-                .orElse(null);
+    public void requestReset(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            LocalDateTime expiresAt = LocalDateTime.now().plusHours(EXPIRATION_HOURS);
+            tokenRepository.save(new PasswordResetToken(user, token, expiresAt));
+            emailService.sendPasswordReset(user.getEmail(), token);
+        });
     }
 
     /** Step 2: validates the token and changes the user's password. */

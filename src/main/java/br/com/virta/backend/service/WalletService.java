@@ -109,7 +109,6 @@ public class WalletService {
 
         User target = userRepository.findByEmail(dto.email()).orElse(null);
         boolean created = false;
-        String debugToken = null;
 
         if (target == null) {
             // Invite flow: create a placeholder account and issue a reset token so
@@ -118,14 +117,14 @@ public class WalletService {
                     nameFromEmail(dto.email()),
                     dto.email(),
                     passwordEncoder.encode(UUID.randomUUID().toString())));
-            debugToken = passwordResetService.requestReset(dto.email());
+            passwordResetService.requestReset(dto.email());
             created = true;
         } else if (memberRepository.existsByWalletAndUser(wallet, target)) {
             throw new ConflictException("User is already a member of this wallet.");
         }
 
         WalletMember member = memberRepository.save(new WalletMember(wallet, target, dto.role()));
-        return new AddMemberResponseDTO(toMemberDto(member), created, debugToken);
+        return new AddMemberResponseDTO(toMemberDto(member), created, null);
     }
 
     private String nameFromEmail(String email) {

@@ -57,10 +57,9 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ForgotPasswordResponseDTO> forgotPassword(@RequestBody @Valid ForgotPasswordRequestDTO dto) {
-        String debugToken = passwordResetService.requestReset(dto.email());
+        passwordResetService.requestReset(dto.email());
         return ResponseEntity.ok(new ForgotPasswordResponseDTO(
-                "If this email is registered, you will receive instructions shortly.",
-                debugToken));
+                "If this email is registered, you will receive instructions shortly.", null));
     }
 
     @PostMapping("/reset-password")
