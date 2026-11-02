@@ -44,7 +44,9 @@ public class ReportService {
                     YearMonth month = YearMonth.from(t.date());
                     return !month.isBefore(from) && !month.isAfter(to);
                 })
-                .filter(t -> categoryIds == null || categoryIds.isEmpty() || categoryIds.contains(t.categoryId()))
+                // Uncategorized transactions only pass when no category is selected.
+                .filter(t -> categoryIds == null || categoryIds.isEmpty()
+                        || (t.categoryId() != null && categoryIds.contains(t.categoryId())))
                 .sorted(Comparator.comparing(TransactionResponseDTO::date))
                 .toList();
 
