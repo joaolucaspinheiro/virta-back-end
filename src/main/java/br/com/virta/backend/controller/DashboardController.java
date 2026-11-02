@@ -1,6 +1,7 @@
 package br.com.virta.backend.controller;
 
 import br.com.virta.backend.dto.DashboardSummaryResponseDTO;
+import br.com.virta.backend.model.TransactionType;
 import br.com.virta.backend.service.TransactionService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/wallets/{walletId}")
@@ -28,7 +30,10 @@ public class DashboardController {
             @PathVariable Long walletId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) List<Long> categoryIds,
+            @RequestParam(required = false) TransactionType type,
             Authentication auth) {
-        return ResponseEntity.ok(transactionService.summary(auth.getName(), walletId, startDate, endDate));
+        return ResponseEntity.ok(transactionService.summary(
+                auth.getName(), walletId, startDate, endDate, categoryIds, type));
     }
 }

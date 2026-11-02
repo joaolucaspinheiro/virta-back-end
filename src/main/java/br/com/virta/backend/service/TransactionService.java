@@ -126,13 +126,27 @@ public SseEmitter subscribe(String email, Long walletId){
     @Transactional(readOnly = true)
     public DashboardSummaryResponseDTO summary(String email, Long walletId,
                                                LocalDate startDate, LocalDate endDate) {
+        return summary(email, walletId, startDate, endDate, null, null);
+    }
+
+    /**
+     * Summary with optional filters: period, categories (any of them) and type.
+     * Null or empty filters mean "everything".
+     */
+    @Transactional(readOnly = true)
+    public DashboardSummaryResponseDTO summary(String email, Long walletId,
+                                               LocalDate startDate, LocalDate endDate,
+                                               List<Long> categoryIds, TransactionType type) {
         User user = currentUser(email);
         Wallet wallet = walletOrThrow(walletId);
         membershipOrThrow(wallet, user); // any member can see the summary
 
-        List<Transaction> txs = (startDate != null && endDate != null)
+        List<Transaction> txs = ((startDate != null && endDate != null)
                 ? transactionRepository.findByWalletAndDateBetween(wallet, startDate, endDate)
-                : transactionRepository.findByWallet(wallet);
+                : transactionRepository.findByWallet(wallet))
+                .stream()
+                .filter(t -> matches(t, categoryIds, type))
+                .toList();
 
         BigDecimal totalIncome = sumByType(txs, TransactionType.INCOME);
         BigDecimal totalExpense = sumByType(txs, TransactionType.EXPENSE);
@@ -168,6 +182,17 @@ public SseEmitter subscribe(String email, Long walletId){
                 txs.size(),
                 byCategory,
                 byMonth);
+    }
+
+    /** Type filter + category filter (uncategorized transactions only pass when no category is selected). */
+    private static boolean matches(Transaction t, List<Long> categoryIds, TransactionType type) {
+        if (type != null && t.getType() != type) {
+            return false;
+        }
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return true;
+        }
+        return t.getCategory() != null && categoryIds.contains(t.getCategory().getId());
     }
 
     private BigDecimal sumByType(List<Transaction> txs, TransactionType type) {
