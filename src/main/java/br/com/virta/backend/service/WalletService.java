@@ -62,6 +62,12 @@ public class WalletService {
         return toDto(wallet, WalletRole.OWNER);
     }
 
+    @Transactional
+    public void createDefaultWallet(User user) {
+        Wallet wallet = walletRepository.save(new Wallet(user, "Minha carteira", null));
+        memberRepository.save(new WalletMember(wallet, user, WalletRole.OWNER));
+    }
+
     @Transactional(readOnly = true)
     public WalletResponseDTO get(String email, Long walletId) {
         User user = currentUser(email);
@@ -87,6 +93,9 @@ public class WalletService {
         User user = currentUser(email);
         Wallet wallet = walletOrThrow(walletId);
         requireOwner(membershipOrThrow(wallet, user));
+        if (walletRepository.countByOwner(user) <= 1) {
+            throw new BusinessException("You can't delete your only wallet.");
+        }
         memberRepository.deleteAll(memberRepository.findByWallet(wallet));
         walletRepository.delete(wallet);
     }

@@ -7,6 +7,7 @@ import br.com.virta.backend.exception.EmailAlreadyExistsException;
 import br.com.virta.backend.exception.InvalidCredentialsException;
 import br.com.virta.backend.model.User;
 import br.com.virta.backend.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,19 +19,24 @@ public class AuthService {
     private final UserRepository userRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final WalletService walletService;
 
     public AuthService(UserRepository userRepository,
-                       GoogleTokenVerifier googleTokenVerifier) {
+                       GoogleTokenVerifier googleTokenVerifier,
+                       WalletService walletService) {
         this.userRepository = userRepository;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.walletService = walletService;
     }
 
+    @Transactional
     public void register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.email())) {
             throw new EmailAlreadyExistsException(dto.email());
         }
-        User user = new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password()));
-        userRepository.save(user);
+        User user = userRepository.save(
+                new User(dto.name(), dto.email(), passwordEncoder.encode(dto.password())));
+        walletService.createDefaultWallet(user);
     }
 
     public User login(LoginRequestDTO dto) {
@@ -46,6 +52,7 @@ public class AuthService {
      * Login/sign-up via Google. Validates the ID token and, on first access,
      * creates the user with a random password (the account is owned by Google).
      */
+    @Transactional
     public User loginWithGoogle(String credential) {
         GoogleUserInfo info = googleTokenVerifier.verify(credential);
         return userRepository.findByEmail(info.email())
@@ -55,7 +62,9 @@ public class AuthService {
                             info.email(),
                             passwordEncoder.encode(UUID.randomUUID().toString()));
                     created.setPhoto(info.photo());
-                    return userRepository.save(created);
+                    User saved = userRepository.save(created);
+                    walletService.createDefaultWallet(saved);
+                    return saved;
                 });
     }
 }
