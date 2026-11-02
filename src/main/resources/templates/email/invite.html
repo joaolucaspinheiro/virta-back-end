@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Você foi convidado para uma carteira</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">{{inviter}} convidou você para a carteira "{{wallet}}". Crie sua senha para entrar.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9">
+  <tr><td align="center" style="padding:32px 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
+      <tr><td style="padding:0 4px 20px 4px">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="width:40px;height:40px;vertical-align:middle"><img src="{{logoUrl}}" width="40" height="40" alt="Virta" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;border-radius:10px"></td>
+          <td style="padding-left:10px;font:700 20px Arial,Helvetica,sans-serif;color:#0f172a">Virta</td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="height:4px;background:#1e3a8a;background-image:linear-gradient(135deg,#1e3a8a,#3b6fd6);font-size:0;line-height:0">&nbsp;</td></tr>
+          <tr><td style="padding:36px 36px 8px 36px">
+            <h1 style="margin:0 0 16px 0;font:700 24px/1.3 Arial,Helvetica,sans-serif;color:#0f172a">Você foi convidado para uma carteira</h1>
+            <p style="margin:0 0 24px 0;font:16px/1.6 Arial,Helvetica,sans-serif;color:#334155"><strong style="color:#0f172a">{{inviter}}</strong> quer dividir as finanças com você no Virta.</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0;border-radius:8px"><tr>
+              <td style="padding:16px 18px;font:14px/1.5 Arial,Helvetica,sans-serif;color:#64748b">
+                Carteira<br><span style="font:700 17px Arial,Helvetica,sans-serif;color:#0f172a">{{wallet}}</span>
+              </td>
+              <td align="right" style="padding:16px 18px;font:14px/1.5 Arial,Helvetica,sans-serif;color:#64748b">
+                Seu papel<br><span style="display:inline-block;margin-top:4px;background:#dbeafe;color:#1e3a8a;font:700 13px Arial,Helvetica,sans-serif;padding:4px 10px;border-radius:999px">{{role}}</span>
+              </td>
+            </tr></table>
+            <p style="margin:24px 0 28px 0;font:16px/1.6 Arial,Helvetica,sans-serif;color:#334155">Para entrar, crie sua senha. Depois é só fazer login com este e-mail.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td align="center" bgcolor="#1e3a8a" style="border-radius:8px">
+                <a href="{{link}}" style="display:inline-block;padding:14px 28px;font:700 16px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px">Aceitar convite</a>
+              </td>
+            </tr></table>
+            <p style="margin:20px 0 0 0;font:14px/1.6 Arial,Helvetica,sans-serif;color:#64748b">O link expira em <strong style="color:#334155">1 hora</strong>. Se expirar, use "Esqueci a senha" na tela de login.</p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 36px 36px;font:13px/1.6 Arial,Helvetica,sans-serif;color:#64748b">
+            Não conhece quem enviou? Pode ignorar este e-mail.<br><br>
+            O botão não funcionou? Copie e cole este endereço no navegador:<br>
+            <a href="{{link}}" style="color:#1e3a8a;word-break:break-all">{{link}}</a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:20px 8px 0 8px;text-align:center;font:12px/1.6 Arial,Helvetica,sans-serif;color:#94a3b8">
+        Virta · Finanças pessoais e compartilhadas<br>
+        Este é um e-mail automático, não responda.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

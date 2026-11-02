@@ -30,17 +30,21 @@ public class PasswordResetService {
     }
 
     /**
-     * Step 1: generates and persists a token if the e-mail exists.
-     * Returns the token (for testing/debug only) or null — the client response
-     * is neutral regardless, so it never reveals whether the e-mail is registered.
+     * Step 1: if the e-mail exists, generates a token and e-mails the reset link.
+     * The client response is neutral regardless, so it never reveals whether the
+     * e-mail is registered.
      */
     public void requestReset(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String token = UUID.randomUUID().toString();
-            LocalDateTime expiresAt = LocalDateTime.now().plusHours(EXPIRATION_HOURS);
-            tokenRepository.save(new PasswordResetToken(user, token, expiresAt));
-            emailService.sendPasswordReset(user.getEmail(), token);
-        });
+        userRepository.findByEmail(email).ifPresent(user ->
+                emailService.sendPasswordReset(user.getEmail(), user.getName(), createToken(user)));
+    }
+
+    /** Generates and persists a one-hour token for the user (also used by wallet invites). */
+    public String createToken(User user) {
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(EXPIRATION_HOURS);
+        tokenRepository.save(new PasswordResetToken(user, token, expiresAt));
+        return token;
     }
 
     /** Step 2: validates the token and changes the user's password. */

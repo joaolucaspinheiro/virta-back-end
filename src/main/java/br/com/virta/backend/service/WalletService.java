@@ -31,16 +31,19 @@ public class WalletService {
     private final WalletMemberRepository memberRepository;
     private final UserRepository userRepository;
     private final PasswordResetService passwordResetService;
+    private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public WalletService(WalletRepository walletRepository,
                          WalletMemberRepository memberRepository,
                          UserRepository userRepository,
-                         PasswordResetService passwordResetService) {
+                         PasswordResetService passwordResetService,
+                         EmailService emailService) {
         this.walletRepository = walletRepository;
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
         this.passwordResetService = passwordResetService;
+        this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -111,13 +114,14 @@ public class WalletService {
         boolean created = false;
 
         if (target == null) {
-            // Invite flow: create a placeholder account and issue a reset token so
-            // the invited person can set their password (simulated e-mail).
+            // Invite flow: create a placeholder account and e-mail an invite whose
+            // link lets the invited person set their password.
             target = userRepository.save(new User(
                     nameFromEmail(dto.email()),
                     dto.email(),
                     passwordEncoder.encode(UUID.randomUUID().toString())));
-            passwordResetService.requestReset(dto.email());
+            String token = passwordResetService.createToken(target);
+            emailService.sendInvite(target.getEmail(), user.getName(), wallet.getName(), dto.role(), token);
             created = true;
         } else if (memberRepository.existsByWalletAndUser(wallet, target)) {
             throw new ConflictException("User is already a member of this wallet.");
