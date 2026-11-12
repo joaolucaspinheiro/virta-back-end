@@ -2,6 +2,7 @@ package br.com.virta.backend.service;
 
 import br.com.virta.backend.dto.CategoryRequestDTO;
 import br.com.virta.backend.dto.CategoryResponseDTO;
+import br.com.virta.backend.dto.DashboardSummaryResponseDTO;
 import br.com.virta.backend.dto.TransactionRequestDTO;
 import br.com.virta.backend.dto.TransactionResponseDTO;
 import br.com.virta.backend.model.TransactionType;
@@ -12,11 +13,11 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @Component
 public class AssistantTools {
@@ -54,7 +55,20 @@ public class AssistantTools {
                                 "date", param("string", "Date as YYYY-MM-DD. Omit it for today."),
                                 "categoryName", param("string",
                                         "Name of one of the user's existing categories. Omit it if none fits.")),
-                        List.of("type", "amount", "description"))
+                        List.of("type", "amount", "description")),
+                tool("get_summary",
+                        "Returns totals (income, expense, balance), totals per category and per month "
+                                + "for the current wallet. Use it to answer questions like 'how much did I spend'.",
+                        Map.of(
+                                "startDate", param("string", "First day as YYYY-MM-DD. Omit both dates for all time."),
+                                "endDate", param("string", "Last day as YYYY-MM-DD."),
+                                "type", enumParam("Only INCOME or only EXPENSE. Omit it for both.",
+                                        "INCOME", "EXPENSE")),
+                        List.of()),
+                tool("list_recent_transactions",
+                        "Lists the most recent transactions of the current wallet, newest first.",
+                        Map.of("limit", param("integer", "How many to return, from 1 to 20. Default 10.")),
+                        List.of())
         );
     }
 
@@ -64,6 +78,8 @@ public class AssistantTools {
             return switch (name) {
                 case "create_category" -> createCategory(email, args);
                 case "create_transaction" -> createTransaction(email, walletId, args);
+                case "get_summary" -> getSummary(email, walletId, args);
+                case "list_recent_transactions" -> listRecentTransactions(email, walletId, args);
                 default -> Map.of("error", "Unknown tool: " + name);
             };
         } catch (Exception e) {
@@ -81,10 +97,7 @@ public class AssistantTools {
     private Map<String, Object> createTransaction(String email, Long walletId, Map<String, Object> args) {
         TransactionType type = type(args);
         Long categoryId = categoryId(email, type, text(args, "categoryName"));
-        // Render runs in UTC: at 10 p.m. in Brazil it is already "tomorrow" there.
-        LocalDate date = args.get("date") == null
-                ? LocalDate.now(ZoneId.of("America/Sao_Paulo"))
-                : LocalDate.parse(text(args, "date"));
+        LocalDate date = args.get("date") == null ? today() : date(args, "date");
 
         TransactionRequestDTO dto = new TransactionRequestDTO(
                 type, decimal(args, "amount"), text(args, "description"), date, categoryId);
@@ -107,6 +120,46 @@ public class AssistantTools {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Category '" + name + "' not found. Existing "
                         + type + " categories: " + categories.stream().map(CategoryResponseDTO::name).toList()));
+    }
+
+    private Map<String, Object> getSummary(String email, Long walletId, Map<String, Object> args) {
+        LocalDate start = date(args, "startDate");
+        LocalDate end = date(args, "endDate");
+        if (start != null && end == null) {
+            end = today();
+        }
+        TransactionType type = args.get("type") == null ? null : type(args);
+
+        DashboardSummaryResponseDTO s = transactionService.summary(email, walletId, start, end, null, type);
+        // Only what the answer needs: no ids, colors or names of who created each transaction (LGPD).
+        return Map.of(
+                "totalIncome", s.totalIncome(),
+                "totalExpense", s.totalExpense(),
+                "balance", s.balance(),
+                "transactionCount", s.transactionCount(),
+                "byCategory", s.byCategory().stream()
+                        .map(c -> Map.of("category", c.categoryName(), "total", c.total()))
+                        .toList(),
+                "byMonth", s.byMonth().stream()
+                        .map(m -> Map.of("month", m.month(), "income", m.income(), "expense", m.expense()))
+                        .toList());
+    }
+
+    private Map<String, Object> listRecentTransactions(String email, Long walletId, Map<String, Object> args) {
+        long requested = args.get("limit") == null ? 10 : Math.round(Double.parseDouble(args.get("limit").toString()));
+        long limit = Math.max(1, Math.min(20, requested)); // never trust the size the AI asks for
+
+        List<Map<String, Object>> items = transactionService.list(email, walletId, null).stream()
+                .sorted(Comparator.comparing(TransactionResponseDTO::date).reversed())
+                .limit(limit)
+                .map(t -> Map.<String, Object>of(
+                        "date", t.date().toString(),
+                        "type", t.type().name(),
+                        "amount", t.amount(),
+                        "description", t.description() == null ? "" : t.description(),
+                        "category", t.categoryName() == null ? "none" : t.categoryName()))
+                .toList();
+        return Map.of("transactions", items);
     }
 
     // ---------- helpers ----------
@@ -140,6 +193,16 @@ public class AssistantTools {
     private static BigDecimal decimal(Map<String, Object> args, String key) {
         Object value = args.get(key);
         return value == null ? null : new BigDecimal(value.toString());
+    }
+
+    private static LocalDate date(Map<String, Object> args, String key) {
+        String value = text(args, key);
+        return value == null || value.isBlank() ? null : LocalDate.parse(value);
+    }
+
+    /** Today in Brazil: the server (Render) runs in UTC, where 10 p.m. here is already tomorrow. */
+    private static LocalDate today() {
+        return LocalDate.now(ZoneId.of("America/Sao_Paulo"));
     }
 
     private static Map<String, Object> tool(String name, String description,
