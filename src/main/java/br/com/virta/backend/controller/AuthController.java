@@ -10,6 +10,7 @@ import br.com.virta.backend.dto.ResetPasswordRequestDTO;
 import br.com.virta.backend.model.User;
 import br.com.virta.backend.service.AuthService;
 import br.com.virta.backend.service.JwtService;
+import br.com.virta.backend.dto.TotpLoginRequestDTO;
 import br.com.virta.backend.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -40,19 +41,31 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "User registered successfully."));
     }
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO dto) {
         User user = authService.login(dto);
-        String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new LoginResponseDTO(token, user.getId(), user.getName(), user.getEmail()));
+        if (user.isTotpEnabled()) {
+            // Password is right, but the code is still missing: no access token yet.
+            return ResponseEntity.ok(LoginResponseDTO.totpChallenge(jwtService.generateTotpChallenge(user)));
+        }
+        return ResponseEntity.ok(authenticated(user));
+    }
+
+    @PostMapping("/login/totp")
+    public ResponseEntity<LoginResponseDTO> loginTotp(@RequestBody @Valid TotpLoginRequestDTO dto) {
+        User user = authService.loginWithTotp(dto.challengeToken(), dto.code());
+        return ResponseEntity.ok(authenticated(user));
     }
 
     @PostMapping("/google")
     public ResponseEntity<LoginResponseDTO> google(@RequestBody @Valid GoogleLoginRequestDTO dto) {
         User user = authService.loginWithGoogle(dto.credential());
-        String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new LoginResponseDTO(token, user.getId(), user.getName(), user.getEmail()));
+        return ResponseEntity.ok(authenticated(user));
+    }
+
+    private LoginResponseDTO authenticated(User user) {
+        return LoginResponseDTO.authenticated(
+                jwtService.generateToken(user), user.getId(), user.getName(), user.getEmail());
     }
 
     @PostMapping("/forgot-password")

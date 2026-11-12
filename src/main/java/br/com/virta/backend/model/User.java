@@ -36,6 +36,10 @@ public class User {
 
     @Column(name = "totp_enabled", nullable = false, columnDefinition = "boolean default false")
     private boolean totpEnabled;
+
+    @Column(name = "totp_recovery_codes", length = 1000)
+    private String totpRecoveryCodes;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -54,6 +54,7 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getPhoto(),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                user.isTotpEnabled());
     }
 }

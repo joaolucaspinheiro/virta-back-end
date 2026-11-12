@@ -7,5 +7,6 @@ public record UserResponseDTO(
         String name,
         String email,
         String photo,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean totpEnabled
 ) {}
