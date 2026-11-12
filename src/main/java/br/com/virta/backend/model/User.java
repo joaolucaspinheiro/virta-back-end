@@ -31,6 +31,11 @@ public class User {
     @Column(name = "photo")
     private String photo;
 
+    @Column(name = "totp_secret", length = 64)
+    private String totpSecret;
+
+    @Column(name = "totp_enabled", nullable = false, columnDefinition = "boolean default false")
+    private boolean totpEnabled;
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
