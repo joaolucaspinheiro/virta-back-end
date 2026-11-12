@@ -25,12 +25,15 @@ public class TwoFactorService {
 
     private final UserRepository userRepository;
     private final TotpService totpService;
+    private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom random = new SecureRandom();
 
-    public TwoFactorService(UserRepository userRepository, TotpService totpService) {
+    public TwoFactorService(UserRepository userRepository, TotpService totpService,
+                            EmailService emailService) {
         this.userRepository = userRepository;
         this.totpService = totpService;
+        this.emailService = emailService;
     }
 
     /** Enabling, step 1: a new secret (not active yet) and the QR code content. */
@@ -68,6 +71,10 @@ public class TwoFactorService {
                 .collect(Collectors.joining(";")));
         user.setTotpEnabled(true);
         userRepository.save(user);
+        emailService.sendSecurityAlert(user.getEmail(), user.getName(),
+                "Verificação em duas etapas ativada",
+                "A verificação em duas etapas foi ativada na sua conta. A partir de agora, ao entrar, "
+                        + "vamos pedir também o código do seu app autenticador.");
         return codes;
     }
 
@@ -85,6 +92,9 @@ public class TwoFactorService {
         user.setTotpSecret(null);
         user.setTotpRecoveryCodes(null);
         userRepository.save(user);
+        emailService.sendSecurityAlert(user.getEmail(), user.getName(),
+                "Verificação em duas etapas desativada",
+                "A verificação em duas etapas foi desativada na sua conta. Agora basta a senha para entrar.");
     }
 
     /**
@@ -109,10 +119,19 @@ public class TwoFactorService {
                 hashes.remove(hash);
                 user.setTotpRecoveryCodes(String.join(";", hashes));
                 userRepository.save(user);
+                alertRecoveryCodeUsed(user, hashes.size());
                 return true;
             }
         }
         return false;
+    }
+
+    private void alertRecoveryCodeUsed(User user, int remaining) {
+        String message = "Um código de recuperação foi usado para acessar a sua conta. "
+                + (remaining == 0
+                ? "Era o último: desative e ative de novo a verificação em duas etapas para gerar novos códigos."
+                : "Restam " + remaining + (remaining == 1 ? " código." : " códigos."));
+        emailService.sendSecurityAlert(user.getEmail(), user.getName(), "Código de recuperação usado", message);
     }
 
     private List<String> newRecoveryCodes() {

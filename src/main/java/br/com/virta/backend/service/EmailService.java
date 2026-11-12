@@ -14,6 +14,9 @@ import org.springframework.web.util.HtmlUtils;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +39,7 @@ public class EmailService {
     private final String frontendUrl;
     private final String resetTemplate;
     private final String inviteTemplate;
+    private final String securityTemplate;
 
     public EmailService(@Value("${brevo.api-key:}") String apiKey,
                         @Value("${mail.from:}") String from,
@@ -45,6 +49,7 @@ public class EmailService {
         this.frontendUrl = frontendUrl;
         this.resetTemplate = loadTemplate("password-reset.html");
         this.inviteTemplate = loadTemplate("invite.html");
+        this.securityTemplate = loadTemplate("security-alert.html");
     }
 
     /** Runs in another thread, so the HTTP response never waits on (or reveals) the e-mail. */
@@ -78,6 +83,28 @@ public class EmailService {
                 + link
                 + "\n\nNão conhece quem enviou? Pode ignorar este e-mail.";
         send(to, "Virta - " + inviterName + " convidou você para uma carteira", html, text);
+    }
+
+    /**
+     * Security notice (two-step verification turned on/off, recovery code used).
+     * It only informs the account owner — it never grants access.
+     */
+    @Async
+    public void sendSecurityAlert(String to, String name, String title, String message) {
+        String when = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo"))
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"));
+        String link = frontendUrl + "/app/perfil";
+        String html = render(securityTemplate, Map.of(
+                "name", name,
+                "title", title,
+                "message", message,
+                "when", when,
+                "link", link,
+                "logoUrl", logoUrl()));
+        String text = "Olá, " + name + ",\n\n" + message
+                + "\n\nQuando: " + when + " (horário de Brasília)"
+                + "\n\nNão foi você? Troque sua senha agora e revise a segurança da conta: " + link;
+        send(to, "Virta - " + title, html, text);
     }
 
     private void send(String to, String subject, String html, String text) {
