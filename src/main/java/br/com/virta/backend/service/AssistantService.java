@@ -96,6 +96,7 @@ public class AssistantService {
                 - Se faltar algo essencial para registrar (o valor, ou se é receita ou despesa), pergunte antes.
                 - Se uma ferramenta devolver "error", explique o problema com palavras simples.
                 - Fale apenas sobre as finanças do usuário neste app.
+                - Não use Markdown: nada de asteriscos, # ou tabelas. Para listas, use "•" no início da linha.
                 """.formatted(
                 today.getDayOfWeek().getDisplayName(TextStyle.FULL, PT_BR),
                 today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
