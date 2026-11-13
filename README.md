@@ -1,5 +1,7 @@
 # Virta — Back-end
 
+[![CI](https://github.com/joaolucaspinheiro/virta-back-end/actions/workflows/ci.yml/badge.svg)](https://github.com/joaolucaspinheiro/virta-back-end/actions/workflows/ci.yml)
+
 API REST do **Virta**, sistema de gestão financeira pessoal e compartilhada, feita com **Spring Boot 4 (Java 17)**, Spring Security (JWT), JPA/Hibernate e MySQL.
 
 **A documentação completa do projeto** (funcionalidades, arquitetura, decisões, segurança e variáveis de ambiente) está no README do repositório principal: **https://github.com/joaolucaspinheiro/virta**
@@ -8,6 +10,7 @@ API REST do **Virta**, sistema de gestão financeira pessoal e compartilhada, fe
 |---|---|
 | API em produção | https://virta-back-end.onrender.com |
 | Swagger | https://virta-back-end.onrender.com/swagger-ui/index.html |
+| Health check | https://virta-back-end.onrender.com/actuator/health |
 | Aplicação | https://virta-front-end.vercel.app |
 
 > Plano gratuito do Render: a primeira requisição depois de um tempo parado pode levar cerca de 1 minuto.

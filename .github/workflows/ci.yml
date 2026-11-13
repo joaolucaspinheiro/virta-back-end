@@ -1,0 +1,26 @@
+# Runs the back-end test suite on every push and pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Testes (JUnit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # mvnw was committed from Windows without the executable bit.
+      - name: Run tests
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test
