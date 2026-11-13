@@ -40,6 +40,7 @@ public class EmailService {
     private final String resetTemplate;
     private final String inviteTemplate;
     private final String securityTemplate;
+    private final String verificationTemplate;
 
     public EmailService(@Value("${brevo.api-key:}") String apiKey,
                         @Value("${mail.from:}") String from,
@@ -50,6 +51,7 @@ public class EmailService {
         this.resetTemplate = loadTemplate("password-reset.html");
         this.inviteTemplate = loadTemplate("invite.html");
         this.securityTemplate = loadTemplate("security-alert.html");
+        this.verificationTemplate = loadTemplate("email-verification.html");
     }
 
     /** Runs in another thread, so the HTTP response never waits on (or reveals) the e-mail. */
@@ -83,6 +85,21 @@ public class EmailService {
                 + link
                 + "\n\nNão conhece quem enviou? Pode ignorar este e-mail.";
         send(to, "Virta - " + inviterName + " convidou você para uma carteira", html, text);
+    }
+
+    /** Account confirmation link, sent after sign-up (valid for 24 hours). */
+    @Async
+    public void sendEmailVerification(String to, String name, String token) {
+        String link = frontendUrl + "/verificar-email/" + token;
+        String html = render(verificationTemplate, Map.of(
+                "name", name,
+                "link", link,
+                "logoUrl", logoUrl()));
+        String text = "Olá, " + name + ",\n\n"
+                + "Para ativar sua conta no Virta, confirme seu e-mail pelo link abaixo (válido por 24 horas):\n\n"
+                + link
+                + "\n\nNão criou uma conta? Pode ignorar este e-mail.";
+        send(to, "Virta - Confirme seu e-mail", html, text);
     }
 
     /**

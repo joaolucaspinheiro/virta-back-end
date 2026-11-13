@@ -19,6 +19,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final long WINDOW_MS = 60_000;
     private static final Set<String> LIMITED_PATHS =
             Set.of("/auth/login", "/auth/login/totp", "/auth/forgot-password", "/auth/register",
+                    "/auth/verify-email", "/auth/resend-verification",
                     "/api/v1/users/me/totp/enable", "/api/v1/users/me/totp/disable");
 
     private final Map<String, Window> windows = new ConcurrentHashMap<>();

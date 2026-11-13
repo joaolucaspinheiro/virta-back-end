@@ -6,11 +6,14 @@ import br.com.virta.backend.dto.GoogleLoginRequestDTO;
 import br.com.virta.backend.dto.LoginRequestDTO;
 import br.com.virta.backend.dto.LoginResponseDTO;
 import br.com.virta.backend.dto.RegisterRequestDTO;
+import br.com.virta.backend.dto.ResendVerificationRequestDTO;
 import br.com.virta.backend.dto.ResetPasswordRequestDTO;
 import br.com.virta.backend.model.User;
 import br.com.virta.backend.service.AuthService;
+import br.com.virta.backend.service.EmailVerificationService;
 import br.com.virta.backend.service.JwtService;
 import br.com.virta.backend.dto.TotpLoginRequestDTO;
+import br.com.virta.backend.dto.VerifyEmailRequestDTO;
 import br.com.virta.backend.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,20 +29,37 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final PasswordResetService passwordResetService;
+    private final EmailVerificationService emailVerificationService;
 
     public AuthController(AuthService authService,
                           JwtService jwtService,
-                          PasswordResetService passwordResetService) {
+                          PasswordResetService passwordResetService,
+                          EmailVerificationService emailVerificationService) {
         this.authService = authService;
         this.jwtService = jwtService;
         this.passwordResetService = passwordResetService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody @Valid RegisterRequestDTO dto) {
         authService.register(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("message", "User registered successfully."));
+                .body(Map.of("message", "User registered. Check your e-mail to confirm the account."));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody @Valid VerifyEmailRequestDTO dto) {
+        emailVerificationService.verify(dto.token());
+        return ResponseEntity.ok(Map.of("message", "E-mail confirmed."));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+            @RequestBody @Valid ResendVerificationRequestDTO dto) {
+        emailVerificationService.resend(dto.email());
+        return ResponseEntity.ok(Map.of("message",
+                "If this account still needs confirmation, a new e-mail is on its way."));
     }
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO dto) {

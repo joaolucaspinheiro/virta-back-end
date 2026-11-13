@@ -58,6 +58,8 @@ public class PasswordResetService {
 
         User user = record.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
+        // The link came by e-mail, so opening it also proves the e-mail (covers wallet invites too).
+        EmailVerificationService.markVerified(user);
         userRepository.save(user);
 
         record.setUsed(true);

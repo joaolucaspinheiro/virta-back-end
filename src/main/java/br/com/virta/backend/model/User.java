@@ -40,6 +40,20 @@ public class User {
     @Column(name = "totp_recovery_codes", length = 1000)
     private String totpRecoveryCodes;
 
+    /**
+     * False until the owner opens the link sent by e-mail. The column default is true so
+     * accounts that existed before this feature are not locked out.
+     */
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")
+    private boolean emailVerified;
+
+    /** SHA-256 of the pending confirmation link token; the token itself is never stored. */
+    @Column(name = "email_verification_token_hash", length = 64)
+    private String emailVerificationTokenHash;
+
+    @Column(name = "email_verification_expires_at")
+    private LocalDateTime emailVerificationExpiresAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
