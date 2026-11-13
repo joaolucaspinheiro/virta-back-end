@@ -4,7 +4,7 @@
 
 API REST do **Virta**, sistema de gestão financeira pessoal e compartilhada, feita com **Spring Boot 4 (Java 17)**, Spring Security (JWT), JPA/Hibernate e MySQL.
 
-**A documentação completa do projeto** (funcionalidades, arquitetura, decisões, segurança e variáveis de ambiente) está no README do repositório principal: **https://github.com/joaolucaspinheiro/virta**
+**A documentação completa do projeto** (funcionalidades, arquitetura, decisões, segurança e variáveis de ambiente) está no README do repositório principal: **https://github.com/joaolucaspinheiro/virta-front-end**
 
 | | |
 |---|---|
