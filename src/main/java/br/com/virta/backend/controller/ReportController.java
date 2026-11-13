@@ -2,6 +2,8 @@ package br.com.virta.backend.controller;
 
 import br.com.virta.backend.model.TransactionType;
 import br.com.virta.backend.service.ReportService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.util.List;
 
+@Tag(name = "8. Relatórios", description = "Extrato em CSV para abrir no Excel.")
 @RestController
 @RequestMapping("/api/v1/wallets/{walletId}/reports")
 public class ReportController {
@@ -32,6 +35,7 @@ public class ReportController {
      * CSV statement. Example:
      * /reports/statement?from=2026-09&to=2026-11&categoryIds=3&categoryIds=7&type=EXPENSE
      */
+    @Operation(summary = "Extrato em CSV", description = "Período (from/to no formato YYYY-MM), categorias e tipo. Separador ';' e vírgula decimal.")
     @GetMapping("/statement")
     public ResponseEntity<byte[]> statement(@PathVariable Long walletId,
                                             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth from,

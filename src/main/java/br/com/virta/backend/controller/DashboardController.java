@@ -3,6 +3,8 @@ package br.com.virta.backend.controller;
 import br.com.virta.backend.dto.DashboardSummaryResponseDTO;
 import br.com.virta.backend.model.TransactionType;
 import br.com.virta.backend.service.TransactionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "7. Resumo", description = "Totais, gastos por categoria e por mês, com filtros.")
 @RestController
 @RequestMapping("/api/v1/wallets/{walletId}")
 public class DashboardController {
@@ -25,6 +28,7 @@ public class DashboardController {
         this.transactionService = transactionService;
     }
 
+    @Operation(summary = "Resumo da carteira", description = "Totais, por categoria e por mês. Filtros opcionais: startDate, endDate, categoryIds e type.")
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryResponseDTO> summary(
             @PathVariable Long walletId,

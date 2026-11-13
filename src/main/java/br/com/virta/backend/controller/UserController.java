@@ -4,6 +4,8 @@ import br.com.virta.backend.dto.ChangePasswordRequestDTO;
 import br.com.virta.backend.dto.UpdateProfileRequestDTO;
 import br.com.virta.backend.dto.UserResponseDTO;
 import br.com.virta.backend.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Tag(name = "2. Usuário", description = "Perfil do usuário logado e troca de senha.")
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
@@ -21,11 +24,13 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(summary = "Meu perfil")
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> me(Authentication authentication) {
         return ResponseEntity.ok(userService.getCurrentUser(authentication.getName()));
     }
 
+    @Operation(summary = "Atualizar meu nome")
     @PutMapping("/me")
     public ResponseEntity<UserResponseDTO> updateMe(
             @RequestBody @Valid UpdateProfileRequestDTO dto,
@@ -33,6 +38,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateProfile(authentication.getName(), dto.name()));
     }
 
+    @Operation(summary = "Trocar senha", description = "Exige a senha atual.")
     @PatchMapping("/me/password")
     public ResponseEntity<Map<String, String>> changePassword(
             @RequestBody @Valid ChangePasswordRequestDTO dto,

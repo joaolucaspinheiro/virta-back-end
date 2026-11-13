@@ -4,6 +4,8 @@ import br.com.virta.backend.dto.AssistantChatRequestDTO;
 import br.com.virta.backend.dto.AssistantReplyDTO;
 import br.com.virta.backend.service.AssistantRateLimiter;
 import br.com.virta.backend.service.AssistantService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "9. Assistente de IA", description = "Chat com o Gemini que consulta e registra dados usando as mesmas regras da API.")
 @RestController
 @RequestMapping("/api/v1/wallets/{walletId}/assistant")
 public class AssistantController {
@@ -25,6 +28,7 @@ public class AssistantController {
         this.rateLimiter = rateLimiter;
     }
 
+    @Operation(summary = "Conversar com o assistente", description = "Envia o histórico e recebe a resposta e as ações feitas. Limite de 15 mensagens a cada 10 minutos.")
     @PostMapping
     public ResponseEntity<AssistantReplyDTO> chat(@PathVariable Long walletId,
                                                   @RequestBody @Valid AssistantChatRequestDTO dto,
